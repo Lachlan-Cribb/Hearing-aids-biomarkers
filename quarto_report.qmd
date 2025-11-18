@@ -1,0 +1,62 @@
+---
+title: "Results"
+format: html
+---
+
+## Missing data summary
+
+```{r}
+library(targets)
+library(knitr)
+kable(tar_read(missing_summary))
+```
+
+
+## table 2
+# ```{r}
+# tar_load(bl_table)
+# bl_table
+# ```
+
+## TMLE binary
+
+```{r}
+kable(tar_read(tmle_binary_summary))
+```
+
+## TMLE ordinal
+```{r}
+kable(tar_read(tmle_ordinal_summary))
+```
+
+## Quantiles binary
+
+```{r}
+tar_read(quantile_binary_summary)
+```
+
+## Quantiles ordinal 
+```{r}
+tar_read(quantile_ordinal_summary)
+```
+
+## Effect modification pTau181
+
+```{r}
+tar_read(msm_plots_S3_pTau181)
+```
+
+## Effect modification Abeta42:Abeta40
+```{r}
+tar_read(msm_plots_S3_Abeta42_40)
+```
+
+## Effect modification GFAP
+```{r}
+tar_read(msm_plots_S3_GFAP)
+```
+
+## Effect modification NfL
+```{r}
+tar_read(msm_plots_S3_NFlight)
+```
