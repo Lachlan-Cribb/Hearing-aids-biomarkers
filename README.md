@@ -1,0 +1,1 @@
+This repository contains the analysis code for The Effect of Treating Hearing Loss with Hearing Aids Plasma Biomarkers of Alzheimer's Disease and Related Dementias by Cribb et al. The list of R packages used for the project are contained in the renv.lock file - see the renv documentation for details.
