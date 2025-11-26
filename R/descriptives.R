@@ -1,7 +1,7 @@
-## Missing data summary 
+## Missing data summary
 
 get_missing <- function(unimputed_data, eligible_data){
-  
+
   variables <- c(
     "HearingAid",
     "HearingProbs",
@@ -43,27 +43,27 @@ get_missing <- function(unimputed_data, eligible_data){
     "BL_Frailty_DAI50",
     "EyesRate"
   )
-  
+
   eligible_pts <- lapply(eligible_data, \(.x) .x$Safehaven)
-  
+
   unimputed_data <- lapply(eligible_pts, \(.x) unimputed_data[Safehaven %in% .x,])
-  
+
   get_missing <- function(data, var){
     num <- sum(is.na(data[[var]]))
     prop <- num / nrow(data) * 100
     data.table(Variable = var, num = num, prop = prop)
   }
-  
+
   table <- rbindlist(
     lapply(
-    unimputed_data, 
+    unimputed_data,
     \(.x) rbindlist(lapply(variables, get_missing, data = .x))
   ))
   table
 }
 
 get_missing_summary <- function(missing_data){
-  
+
   nice_names <- c(
     "Prevalent hearing aid prescription at cohort entry",
     "Self-reported hearing impairment",
@@ -105,7 +105,7 @@ get_missing_summary <- function(missing_data){
     "Frailty",
     "Visual function"
   )
-  
+
   missing_data <- missing_data[, .(num = mean(num), prop = mean(prop)), by = Variable]
   missing_data[, Variable := nice_names]
   setorder(missing_data, -num)
@@ -116,7 +116,7 @@ get_missing_summary <- function(missing_data){
   missing_data[, list(Variable, Missing)]
 }
 
-## Sample size across imputed datasets 
+## Sample size across imputed datasets
 get_sample_size <- function(data){
   total_n <- unlist(lapply(data, nrow))
   treated_n <- unlist(lapply(data, \(x) nrow(x[Y3M_HearingAid == 1,])))
@@ -147,30 +147,30 @@ baseline_table_summary <- function(data){
   # extract and combine list elements
   numeric_data <- rbindlist(data[str_detect(names(data), "_num")], idcol = "b")
   cat_data <- rbindlist(data[str_detect(names(data), "_cat")], idcol = "b")
-  
+
   # average over imputations and make presentable
-  numeric_data <- 
-    numeric_data |> 
-    group_by(Variable) |> 
-    summarise(across(-c(b), mean)) |> 
-    mutate(across(-Variable, ~ my_round(., 2))) |> 
-    mutate(across(-Variable, ~ gsub(" ", "", .))) |> 
-    mutate(Yes = paste0(Yes_mean, " (", Yes_lower, ", ", Yes_upper, ")"),
-           No = paste0(No_mean, " (", No_lower, ", ", No_upper, ")")) |> 
+  numeric_data <-
+    numeric_data |>
+    group_by(Variable) |>
+    summarise(across(-c(b), mean)) |>
+    mutate(across(-Variable, ~ my_round(., 2))) |>
+    mutate(across(-Variable, ~ gsub(" ", "", .))) |>
+    mutate(Yes = paste0(Yes_median, " (", Yes_lower, ", ", Yes_upper, ")"),
+           No = paste0(No_median, " (", No_lower, ", ", No_upper, ")")) |>
     select(Variable, Yes, No)
-  
+
   cat_data <-
-    cat_data |> 
-    group_by(Variable) |> 
-    summarise(across(-c(b), mean)) |> 
-    mutate(across(-Variable, ~ my_round(., 2))) |> 
-    mutate(across(-Variable, ~ gsub(" ", "", .))) |> 
+    cat_data |>
+    group_by(Variable) |>
+    summarise(across(-c(b), mean)) |>
+    mutate(across(-Variable, ~ my_round(., 2))) |>
+    mutate(across(-Variable, ~ gsub(" ", "", .))) |>
     mutate(Yes = paste0(Yes_count, " (", Yes_perc,"%)"),
-           No = paste0(No_count, " (", No_perc,"%)")) |> 
+           No = paste0(No_count, " (", No_perc,"%)")) |>
     select(Variable, Yes, No)
-  
+
   rbindlist(list(cat_data, numeric_data))
-  
+
 }
 
 ## Baseline characteristic table
@@ -178,27 +178,27 @@ baseline_table_summary <- function(data){
 get_baseline_table <- function(data){
   data <- rbindlist(data, idcol = "m")
   data$m <- as.numeric(as.factor(data$m))
-  
+
   data$Smoking <- ifelse(
-    data$BL_SmHis2 == 1, 
-    "Former", 
+    data$BL_SmHis2 == 1,
+    "Former",
     ifelse(
-      data$BL_SmHis3 == 1, 
-      "Never", 
+      data$BL_SmHis3 == 1,
+      "Never",
       "Current")
     )
-  
+
   data$apoe_e4 <- ifelse(data$apoe_e4 >= 1, 1, 0)
-  
+
   data$S1_Abeta42_40 <- data$S1_Abeta42_40 * 1000
-  
+
   data$Gender <- ifelse(data$Gender == 1, "Woman", "Man")
-  
+
   data$Racial <- ifelse(data$Racial == 1, "Non-White", "White")
-  
+
   data$Edu <- as.factor(data$Edu)
   levels(data$Edu) <- c("< 9", "9-11", "12", "13-15", "16", "17-21")
-  
+
   bl_variables <- c(
     "m",
     "Y3M_HearingAid",
@@ -220,7 +220,7 @@ get_baseline_table <- function(data){
     "S1_GFAP",
     "S1_NFlight"
   )
-  
+
   nice_names <- c(
     "m",
     "Y3M_HearingAid",
@@ -242,25 +242,25 @@ get_baseline_table <- function(data){
     "GFAP",
     "NfL"
   )
-  
+
   # all categorical variables to binary indicators
   data <- data[, ..bl_variables]
   setnames(data, bl_variables, nice_names)
-  
+
   data <- as.data.table(predict(dummyVars(~ ., data = data, fullRank = FALSE), newdata = data))
-  
+
   # split numeric and categorical data
   num_data <- select(data, m, Y3M_HearingAid, where( ~ n_distinct(.) > 2))
   cat_data <- select(data, where( ~ n_distinct(.) == 2))
-  
+
   # summarise continuous data
-  num_out <- map(c("mean", "lower", "upper"), ~ my_summarise(num_data, .x))
+  num_out <- map(c("median", "lower", "upper"), ~ my_summarise(num_data, .x))
   num_out <- Reduce(function(x,y) full_join(x, y, by = "Variable"), num_out)
-  
+
   # summarise categorical data
   cat_out <- map(c("count", "perc"), ~ my_summarise(cat_data, .x))
   cat_out <- Reduce(function(x,y) full_join(x, y, by = "Variable"), cat_out)
-  
+
   list(cat = cat_out, num = num_out)
 }
 
@@ -283,7 +283,6 @@ get_surv_summary <- function(data_all, data_survivors){
       prop_deaths_untrt
     )
   })
-  
+
   rbindlist(surv_summary)
 }
-
