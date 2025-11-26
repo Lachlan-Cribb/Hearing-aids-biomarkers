@@ -1,7 +1,6 @@
 ## Missing data summary
 
-get_missing <- function(unimputed_data, eligible_data){
-
+get_missing <- function(unimputed_data, eligible_data) {
   variables <- c(
     "HearingAid",
     "HearingProbs",
@@ -46,9 +45,11 @@ get_missing <- function(unimputed_data, eligible_data){
 
   eligible_pts <- lapply(eligible_data, \(.x) .x$Safehaven)
 
-  unimputed_data <- lapply(eligible_pts, \(.x) unimputed_data[Safehaven %in% .x,])
+  unimputed_data <- lapply(eligible_pts, \(.x) {
+    unimputed_data[Safehaven %in% .x, ]
+  })
 
-  get_missing <- function(data, var){
+  get_missing <- function(data, var) {
     num <- sum(is.na(data[[var]]))
     prop <- num / nrow(data) * 100
     data.table(Variable = var, num = num, prop = prop)
@@ -56,14 +57,14 @@ get_missing <- function(unimputed_data, eligible_data){
 
   table <- rbindlist(
     lapply(
-    unimputed_data,
-    \(.x) rbindlist(lapply(variables, get_missing, data = .x))
-  ))
+      unimputed_data,
+      \(.x) rbindlist(lapply(variables, get_missing, data = .x))
+    )
+  )
   table
 }
 
-get_missing_summary <- function(missing_data){
-
+get_missing_summary <- function(missing_data) {
   nice_names <- c(
     "Prevalent hearing aid prescription at cohort entry",
     "Self-reported hearing impairment",
@@ -106,7 +107,10 @@ get_missing_summary <- function(missing_data){
     "Visual function"
   )
 
-  missing_data <- missing_data[, .(num = mean(num), prop = mean(prop)), by = Variable]
+  missing_data <- missing_data[,
+    .(num = mean(num), prop = mean(prop)),
+    by = Variable
+  ]
   missing_data[, Variable := nice_names]
   setorder(missing_data, -num)
   missing_data[, prop := round(ifelse(prop < 1 & prop > 0, -1, prop))]
@@ -117,14 +121,14 @@ get_missing_summary <- function(missing_data){
 }
 
 ## Sample size across imputed datasets
-get_sample_size <- function(data){
+get_sample_size <- function(data) {
   total_n <- unlist(lapply(data, nrow))
-  treated_n <- unlist(lapply(data, \(x) nrow(x[Y3M_HearingAid == 1,])))
-  untreated_n <- unlist(lapply(data, \(x) nrow(x[Y3M_HearingAid == 0,])))
+  treated_n <- unlist(lapply(data, \(x) nrow(x[Y3M_HearingAid == 1, ])))
+  untreated_n <- unlist(lapply(data, \(x) nrow(x[Y3M_HearingAid == 0, ])))
   data.table(total = total_n, treated = treated_n, untreated = untreated_n)
 }
 
-sample_size_summarise <- function(data){
+sample_size_summarise <- function(data) {
   data[, .(
     mean_n = mean(total),
     median_n = median(total),
@@ -143,7 +147,7 @@ sample_size_summarise <- function(data){
 
 ## Average over imputations for baseline characteristics table
 
-baseline_table_summary <- function(data){
+baseline_table_summary <- function(data) {
   # extract and combine list elements
   numeric_data <- rbindlist(data[str_detect(names(data), "_num")], idcol = "b")
   cat_data <- rbindlist(data[str_detect(names(data), "_cat")], idcol = "b")
@@ -155,8 +159,10 @@ baseline_table_summary <- function(data){
     summarise(across(-c(b), mean)) |>
     mutate(across(-Variable, ~ my_round(., 2))) |>
     mutate(across(-Variable, ~ gsub(" ", "", .))) |>
-    mutate(Yes = paste0(Yes_median, " (", Yes_lower, ", ", Yes_upper, ")"),
-           No = paste0(No_median, " (", No_lower, ", ", No_upper, ")")) |>
+    mutate(
+      Yes = paste0(Yes_median, " (", Yes_lower, ", ", Yes_upper, ")"),
+      No = paste0(No_median, " (", No_lower, ", ", No_upper, ")")
+    ) |>
     select(Variable, Yes, No)
 
   cat_data <-
@@ -165,17 +171,18 @@ baseline_table_summary <- function(data){
     summarise(across(-c(b), mean)) |>
     mutate(across(-Variable, ~ my_round(., 2))) |>
     mutate(across(-Variable, ~ gsub(" ", "", .))) |>
-    mutate(Yes = paste0(Yes_count, " (", Yes_perc,"%)"),
-           No = paste0(No_count, " (", No_perc,"%)")) |>
+    mutate(
+      Yes = paste0(Yes_count, " (", Yes_perc, "%)"),
+      No = paste0(No_count, " (", No_perc, "%)")
+    ) |>
     select(Variable, Yes, No)
 
   rbindlist(list(cat_data, numeric_data))
-
 }
 
 ## Baseline characteristic table
 
-get_baseline_table <- function(data){
+get_baseline_table <- function(data) {
   data <- rbindlist(data, idcol = "m")
   data$m <- as.numeric(as.factor(data$m))
 
@@ -185,8 +192,9 @@ get_baseline_table <- function(data){
     ifelse(
       data$BL_SmHis3 == 1,
       "Never",
-      "Current")
+      "Current"
     )
+  )
 
   data$apoe_e4 <- ifelse(data$apoe_e4 >= 1, 1, 0)
 
@@ -247,24 +255,27 @@ get_baseline_table <- function(data){
   data <- data[, ..bl_variables]
   setnames(data, bl_variables, nice_names)
 
-  data <- as.data.table(predict(dummyVars(~ ., data = data, fullRank = FALSE), newdata = data))
+  data <- as.data.table(predict(
+    dummyVars(~., data = data, fullRank = FALSE),
+    newdata = data
+  ))
 
   # split numeric and categorical data
-  num_data <- select(data, m, Y3M_HearingAid, where( ~ n_distinct(.) > 2))
-  cat_data <- select(data, where( ~ n_distinct(.) == 2))
+  num_data <- select(data, m, Y3M_HearingAid, where(~ n_distinct(.) > 2))
+  cat_data <- select(data, where(~ n_distinct(.) == 2))
 
   # summarise continuous data
   num_out <- map(c("median", "lower", "upper"), ~ my_summarise(num_data, .x))
-  num_out <- Reduce(function(x,y) full_join(x, y, by = "Variable"), num_out)
+  num_out <- Reduce(function(x, y) full_join(x, y, by = "Variable"), num_out)
 
   # summarise categorical data
   cat_out <- map(c("count", "perc"), ~ my_summarise(cat_data, .x))
-  cat_out <- Reduce(function(x,y) full_join(x, y, by = "Variable"), cat_out)
+  cat_out <- Reduce(function(x, y) full_join(x, y, by = "Variable"), cat_out)
 
   list(cat = cat_out, num = num_out)
 }
 
-get_surv_summary <- function(data_all, data_survivors){
+get_surv_summary <- function(data_all, data_survivors) {
   surv_summary <- map2(data_all, data_survivors, function(.x, .y) {
     n_deaths <- nrow(.x) - nrow(.y)
     prop_deaths <- (n_deaths / nrow(.x)) * 100
@@ -273,7 +284,8 @@ get_surv_summary <- function(data_all, data_survivors){
     prop_deaths_trt <- (n_deaths_trt / nrow(.x[Y3M_HearingAid == 1, ])) * 100
     n_deaths_untrt <- nrow(.x[Y3M_HearingAid == 0, ]) -
       nrow(.y[Y3M_HearingAid == 0, ])
-    prop_deaths_untrt <- (n_deaths_untrt / nrow(.x[Y3M_HearingAid == 0, ])) * 100
+    prop_deaths_untrt <- (n_deaths_untrt / nrow(.x[Y3M_HearingAid == 0, ])) *
+      100
     data.table(
       n_deaths,
       prop_deaths,
