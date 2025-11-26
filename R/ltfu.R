@@ -23,9 +23,9 @@ add_delta <- function(data, delta) {
 }
 
 # Add LTFU indicator
-add_ltfu <- function(data){
-  out <- lapply(data, function(.x){ 
-    .x[, ltfu := is.na(S3_pTau181)]}
-  )
+add_ltfu <- function(data) {
+  out <- lapply(data, function(.x) {
+    .x[, ltfu := is.na(S3_pTau181)]
+  })
   out
 }

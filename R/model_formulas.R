@@ -1,6 +1,6 @@
 #### Outcome models
 
-get_outcome_formula <- function(){
+get_outcome_formula <- function() {
   outcome_covars <- c(
     "as.factor(A)",
     "rcs(AgeAtRand, c(70.8, 73.3, 80.1))",
@@ -44,7 +44,7 @@ get_outcome_formula <- function(){
     "rcs(BL_Frailty_DAI50, c(0.04, 0.09, 0.18))",
     "EyesRate + I(EyesRate^2)"
   )
-  
+
   outcome_model_interactions <- c(
     "as.factor(A)",
     "AgeAtRand",
@@ -61,7 +61,7 @@ get_outcome_formula <- function(){
     "BL_3MS_OverallScore_C",
     "BL_Frailty_DAI50"
   )
-  
+
   outcome_model_interactions <-
     combinations(
       n = length(outcome_model_interactions),
@@ -70,32 +70,33 @@ get_outcome_formula <- function(){
       repeats.allowed = FALSE
     ) |>
     as.data.table()
-  
+
   outcome_model_interactions <- paste(
-    outcome_model_interactions$V1, 
-    outcome_model_interactions$V2, 
-    sep = ":")
-  
+    outcome_model_interactions$V1,
+    outcome_model_interactions$V2,
+    sep = ":"
+  )
+
   outcome_model_interactions <- c(
-    outcome_model_interactions, 
+    outcome_model_interactions,
     c("as.factor(A):CrowdedRm", "as.factor(A):BL_HVLT4")
   )
-  
+
   outcome_form <- as.formula(
     paste(
       "Y ~ 1",
-      paste(outcome_covars, collapse = " + "), 
-      paste(outcome_model_interactions, collapse = " + "), 
+      paste(outcome_covars, collapse = " + "),
+      paste(outcome_model_interactions, collapse = " + "),
       sep = " + "
     )
   )
-  
+
   return(outcome_form)
 }
 
 ## Treatment models
 
-get_treatment_formula <- function(){
+get_treatment_formula <- function() {
   treatment_covars <- c(
     "rcs(AgeAtRand, c(70.8, 73.3, 80.1))",
     "Gender",
@@ -137,7 +138,7 @@ get_treatment_formula <- function(){
     "rcs(BL_Frailty_DAI50, c(0.04, 0.09, 0.18))",
     "EyesRate + I(EyesRate^2)"
   )
-  
+
   # trt_model_interactions <- c(
   #   "AgeAtRand",
   #   "Gender",
@@ -149,7 +150,7 @@ get_treatment_formula <- function(){
   #   "BL_3MS_OverallScore_C",
   #   "BL_Frailty_DAI50"
   # )
-  
+
   # trt_model_interactions <-
   #   combinations(
   #     n = length(trt_model_interactions),
@@ -158,21 +159,21 @@ get_treatment_formula <- function(){
   #     repeats.allowed = FALSE
   #   ) |>
   #   as.data.table()
-  # 
+  #
   # trt_model_interactions <- paste(
-  #   trt_model_interactions$V1, 
-  #   trt_model_interactions$V2, 
+  #   trt_model_interactions$V1,
+  #   trt_model_interactions$V2,
   #   sep = ":")
-  
+
   trt_form <- as.formula(
     paste(
       "A ~ 1",
-      paste(treatment_covars, collapse = " + "), 
-      # paste(trt_model_interactions, collapse = " + "), 
+      paste(treatment_covars, collapse = " + "),
+      # paste(trt_model_interactions, collapse = " + "),
       sep = " + "
     )
   )
-  
+
   return(trt_form)
 }
 
@@ -181,88 +182,88 @@ get_treatment_formula <- function(){
 get_outcome_formula_mars <- function() {
   Y ~
     A +
-    AgeAtRand +
-    Gender +
-    Racial +
-    Edu +
-    Buzz +
-    QuietRm +
-    CrowdedRm +
-    HrsSleep +
-    PresPhysAct +
-    SocialEngagement +
-    Income +
-    S1_pTau181 +
-    S1_Abeta42_40 +
-    S1_GFAP +
-    S1_NFlight +
-    risk_score +
-    S3_Time +
-    BLToneAvg_Better +
-    BL_SBP_Mean +
-    BL_BMI +
-    Pt_Cr +
-    DAB +
-    BL_AHP +
-    BL_Polypharmacy +
-    BL_eGFR_CKD +
-    LFT_PC1 +
-    LFT_PC2 +
-    BL_CesdOverall +
-    BL_SmHis2 +
-    BL_SmHis3 +
-    BL_AlcWk +
-    BL_PCS +
-    BL_MCS +
-    Pt_scoreIRSAD +
-    CKD +
-    apoe_e4 +
-    BL_3MS_OverallScore_C +
-    BL_HVLT4 +
-    BL_Frailty_DAI50 +
-    EyesRate
+      AgeAtRand +
+      Gender +
+      Racial +
+      Edu +
+      Buzz +
+      QuietRm +
+      CrowdedRm +
+      HrsSleep +
+      PresPhysAct +
+      SocialEngagement +
+      Income +
+      S1_pTau181 +
+      S1_Abeta42_40 +
+      S1_GFAP +
+      S1_NFlight +
+      risk_score +
+      S3_Time +
+      BLToneAvg_Better +
+      BL_SBP_Mean +
+      BL_BMI +
+      Pt_Cr +
+      DAB +
+      BL_AHP +
+      BL_Polypharmacy +
+      BL_eGFR_CKD +
+      LFT_PC1 +
+      LFT_PC2 +
+      BL_CesdOverall +
+      BL_SmHis2 +
+      BL_SmHis3 +
+      BL_AlcWk +
+      BL_PCS +
+      BL_MCS +
+      Pt_scoreIRSAD +
+      CKD +
+      apoe_e4 +
+      BL_3MS_OverallScore_C +
+      BL_HVLT4 +
+      BL_Frailty_DAI50 +
+      EyesRate
 }
 
 get_treatment_formula_mars <- function() {
   A ~
     AgeAtRand +
-    Gender +
-    Racial +
-    Edu +
-    Buzz +
-    QuietRm +
-    CrowdedRm +
-    HrsSleep +
-    PresPhysAct +
-    SocialEngagement +
-    Income +
-    S1_pTau181 +
-    S1_Abeta42_40 +
-    S1_GFAP +
-    S1_NFlight +
-    risk_score +
-    S3_Time +
-    BLToneAvg_Better +
-    BL_SBP_Mean +
-    BL_BMI +
-    Pt_Cr +
-    DAB +
-    BL_AHP +
-    BL_Polypharmacy +
-    BL_eGFR_CKD +
-    LFT_PC1 +
-    LFT_PC2 +
-    BL_CesdOverall +
-    BL_SmHis2 +
-    BL_SmHis3 +
-    BL_AlcWk +
-    BL_PCS +
-    BL_MCS +
-    Pt_scoreIRSAD +
-    CKD +
-    apoe_e4 +
-    BL_3MS_OverallScore_C +
-    BL_HVLT4 +
-    BL_Frailty_DAI50 +
-    EyesRate
+      Gender +
+      Racial +
+      Edu +
+      Buzz +
+      QuietRm +
+      CrowdedRm +
+      HrsSleep +
+      PresPhysAct +
+      SocialEngagement +
+      Income +
+      S1_pTau181 +
+      S1_Abeta42_40 +
+      S1_GFAP +
+      S1_NFlight +
+      risk_score +
+      S3_Time +
+      BLToneAvg_Better +
+      BL_SBP_Mean +
+      BL_BMI +
+      Pt_Cr +
+      DAB +
+      BL_AHP +
+      BL_Polypharmacy +
+      BL_eGFR_CKD +
+      LFT_PC1 +
+      LFT_PC2 +
+      BL_CesdOverall +
+      BL_SmHis2 +
+      BL_SmHis3 +
+      BL_AlcWk +
+      BL_PCS +
+      BL_MCS +
+      Pt_scoreIRSAD +
+      CKD +
+      apoe_e4 +
+      BL_3MS_OverallScore_C +
+      BL_HVLT4 +
+      BL_Frailty_DAI50 +
+      EyesRate
 }

@@ -44,13 +44,14 @@ tar_option_set(
   ),
   format = "qs",
   seed = 1234,
-  error = "continue")
+  error = "continue"
+)
 
 # Source the R scripts in the analysis folder
 tar_source()
 source(here("..", "..", "utils", "SF12_scoring.R"))
 
-# Source target modules 
+# Source target modules
 source("risk_model_targets.R")
 source("imputation_targets.R")
 source("eligibility_targets.R")
@@ -69,7 +70,7 @@ list(
   risk_model_targets,
   ## Multiple imputation per-bootstrap sample
   imputation_targets,
-  ## Eligibility criteria 
+  ## Eligibility criteria
   eligibility_targets,
   ## Descriptive summaries
   descriptives_targets,
@@ -83,6 +84,6 @@ list(
   sensitivity_delta_adj_targets,
   ## Sensitivity with MARS for tmle treatment/outcome models
   sensitivity_mars_targets,
-  ## Quarto document with results 
+  ## Quarto document with results
   tar_quarto(report, path = "quarto_report.qmd")
 )
